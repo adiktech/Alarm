@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Умный Строгий Будильник</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: rgba(30, 41, 59, 0.8);
+      --border-color: rgba(255, 255, 255, 0.1);
+      --text-color: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-color: #6366f1;
+      --accent-hover: #4f46e5;
+      --danger-color: #ef4444;
+    }
+
+    [data-theme="light"] {
+      --bg-color: #f1f5f9;
+      --card-bg: rgba(255, 255, 255, 0.9);
+      --border-color: rgba(0, 0, 0, 0.1);
+      --text-color: #0f172a;
+      --text-muted: #64748b;
+      --accent-color: #4f46e5;
+      --accent-hover: #4338ca;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+    }
+
+    /* Аватарка с будильником */
+    .avatar-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 5px;
+    }
+
+    .avatar {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-color), #4338ca);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 55px;
+      border: 4px solid var(--border-color);
+      box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+    }
+
+    .theme-btn {
+      background: none;
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      padding: 8px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .clock-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 25px;
+      text-align: center;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+    }
+
+    .clock-time {
+      font-size: 3.5rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+
+    .clock-date {
+      color: var(--text-muted);
+      font-size: 1rem;
+      margin-top: 5px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 20px;
+    }
+
+    h2 {
+      font-size: 1.2rem;
+      margin-bottom: 15px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+
+    label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    input, select, button {
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-color);
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .preview-sound-btn {
+      margin-top: 5px;
+      background: transparent;
+      border: 1px solid var(--accent-color);
+      color: var(--accent-color);
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      width: fit-content;
+    }
+
+    .btn {
+      background: var(--accent-color);
+      color: white;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      width: 100%;
+    }
+
+    .btn:hover {
+      background: var(--accent-hover);
+    }
+
+    .alarm-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .alarm-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+    }
+
+    .alarm-info .time {
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+
+    .alarm-info .details {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .delete-btn {
+      background: transparent;
+      border: none;
+      color: var(--danger-color);
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+
+    /* Цитата внизу */
+    footer {
+      margin-top: auto;
+      padding: 30px 0 10px 0;
+      text-align: center;
+    }
+
+    .quote-box {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--accent-color);
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      padding: 15px 25px;
+      border-radius: 50px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Экран будильника */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.98);
+      backdrop-filter: blur(25px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 999999;
+      padding: 20px;
+    }
+
+    .modal-overlay.hidden {
+      display: none;
+    }
+
+    .alarm-modal {
+      background: var(--card-bg);
+      border: 3px solid var(--danger-color);
+      border-radius: 24px;
+      padding: 25px;
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      box-shadow: 0 0 50px rgba(239, 68, 68, 0.6);
+      animation: flash 0.8s infinite alternate;
+    }
+
+    @keyframes flash {
+      0% { transform: scale(0.98); box-shadow: 0 0 30px rgba(239, 68, 68, 0.4); }
+      100% { transform: scale(1.02); box-shadow: 0 0 60px rgba(239, 68, 68, 0.9); }
+    }
+
+    .task-title {
+      font-size: 1.6rem;
+      color: var(--danger-color);
+      margin-bottom: 8px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .task-desc {
+      color: var(--text-color);
+      margin-bottom: 15px;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .task-input {
+      width: 100%;
+      margin-bottom: 15px;
+      text-align: center;
+      font-size: 1.4rem;
+      padding: 10px;
+    }
+
+    .camera-container {
+      width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 15px;
+      border: 2px solid var(--accent-color);
+      background: #000;
+    }
+
+    video {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .error-msg {
+      color: var(--danger-color);
+      font-size: 0.9rem;
+      font-weight: bold;
+      margin-top: 8px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>⏰ Умный Будильник</h1>
+      <button class="theme-btn" id="themeToggle">☀️ Тема</button>
+    </header>
+
+    <!-- Аватарка с Будильником -->
+    <div class="avatar-wrapper">
+      <div class="avatar">⏰</div>
+    </div>
+
+    <!-- Часы -->
+    <div class="clock-card">
+      <div class="clock-time" id="currentTime">00:00:00</div>
+      <div class="clock-date" id="currentDate">Понедельник, 1 января</div>
+    </div>
+
+    <!-- Форма установки -->
+    <div class="card">
+      <h2>Новый будильник</h2>
+      <div class="form-group">
+        <label for="alarmTime">Время:</label>
+        <input type="time" id="alarmTime" required>
+      </div>
+
+      <div class="form-group">
+        <label for="alarmSound">Выбор музыки/звука:</label>
+        <select id="alarmSound">
+          <option value="classic">🔔 1. Классический ретро-будильник</option>
+          <option value="digital">📱 2. Цифровой пищащий рингтон</option>
+          <option value="siren">🚨 3. Громкая экстренная сирена</option>
+        </select>
+        <button class="preview-sound-btn" id="previewSoundBtn">▶ Прослушать звук</button>
+      </div>
+      
+      <div class="form-group">
+        <label for="alarmText">Фраза (будет зацикленно повторяться):</label>
+        <input type="text" id="alarmText" placeholder="Например: Дисциплина — это ключ к успеху!">
+      </div>
+
+      <div class="form-group">
+        <label for="taskType">Задание для выключения:</label>
+        <select id="taskType">
+          <option value="algebra">📐 Алгебра: Уравнение с X (2x + 4 = 4x + 2)</option>
+          <option value="math">🧮 Простая математика (25 + 37)</option>
+          <option value="sink">🚰 Показать Раковину (Камера)</option>
+          <option value="toothbrush">🪥 Показать Зубную пасту / Щетку</option>
+          <option value="cup">☕ Показать Кружку / Чашку</option>
+          <option value="clicker">👆 Кликер (15 быстрых нажатий)</option>
+        </select>
+      </div>
+
+      <button class="btn" id="addAlarmBtn">Добавить будильник</button>
+    </div>
+
+    <!-- Список -->
+    <div class="card">
+      <h2>Мои будильники</h2>
+      <div class="alarm-list" id="alarmList"></div>
+    </div>
+
+    <!-- Цитата внизу -->
+    <footer>
+      <div class="quote-box">
+        💡 Дисциплина — это самое важное
+      </div>
+    </footer>
+  </div>
+
+  <!-- Экран будильника -->
+  <div class="modal-overlay hidden" id="alarmModal">
+    <div class="alarm-modal">
+      <h2 class="task-title">ВСТАВАЙТЕ!</h2>
+      <p class="task-desc" id="modalDesc">Выполните задание!</p>
+
+      <div id="taskContainer"></div>
+
+      <p class="error-msg" id="errorMsg">Неверно, попробуйте еще раз!</p>
+      <button class="btn" id="submitTaskBtn" style="margin-top: 10px; padding: 15px;">Выключить будильник</button>
+    </div>
+  </div>
+
+  <script>
+    let alarms = JSON.parse(localStorage.getItem('alarms')) || [];
+    let activeAlarm = null;
+    let audioCtx = null;
+    let isAlarmRinging = false;
+    let currentTaskData = {};
+    let soundTimer = null;
+    let speechInterval = null;
+    let videoStream = null;
+
+    const currentTimeEl = document.getElementById('currentTime');
+    const currentDateEl = document.getElementById('currentDate');
+    const alarmTimeInput = document.getElementById('alarmTime');
+    const alarmSoundSelect = document.getElementById('alarmSound');
+    const alarmTextInput = document.getElementById('alarmText');
+    const taskTypeSelect = document.getElementById('taskType');
+    const addAlarmBtn = document.getElementById('addAlarmBtn');
+    const alarmListEl = document.getElementById('alarmList');
+    const themeToggleBtn = document.getElementById('themeToggle');
+    const previewSoundBtn = document.getElementById('previewSoundBtn');
+    
+    const alarmModal = document.getElementById('alarmModal');
+    const modalDesc = document.getElementById('modalDesc');
+    const taskContainer = document.getElementById('taskContainer');
+    const submitTaskBtn = document.getElementById('submitTaskBtn');
+    const errorMsg = document.getElementById('errorMsg');
+
+    // Часы
+    function updateClock() {
+      const now = new Date();
+      currentTimeEl.textContent = now.toLocaleTimeString('ru-RU');
+      const options = { weekday: 'long', month: 'long', day: 'numeric' };
+      currentDateEl.textContent = now.toLocaleDateString('ru-RU', options);
+      checkAlarms(now);
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Переключение темы
+    themeToggleBtn.addEventListener('click', () => {
+      if (document.body.getAttribute('data-theme') === 'light') {
+        document.body.removeAttribute('data-theme');
+      } else {
+        document.body.setAttribute('data-theme', 'light');
+      }
+    });
+
+    // Управление будильниками
+    function saveAlarms() {
+      localStorage.setItem('alarms', JSON.stringify(alarms));
+      renderAlarms();
+    }
+
+    function renderAlarms() {
+      alarmListEl.innerHTML = '';
+      if (alarms.length === 0) {
+        alarmListEl.innerHTML = '<p style="color: var(--text-muted); text-align: center;">Нет активных будильников</p>';
+        return;
+      }
+
+      const taskNames = {
+        algebra: '📐 Алгебра (Уравнение)',
+        math: '🧮 Математика',
+        sink: '🚰 Показать Раковину',
+        toothbrush: '🪥 Зубная паста / Щетка',
+        cup: '☕ Показать Кружку',
+        clicker: '👆 Кликер'
+      };
+
+      alarms.forEach((alarm, index) => {
+        const item = document.createElement('div');
+        item.className = 'alarm-item';
+        item.innerHTML = `
+          <div class="alarm-info">
+            <div class="time">${alarm.time}</div>
+            <div class="details">${alarm.text ? '"' + alarm.text + '" • ' : ''}${taskNames[alarm.task]}</div>
+          </div>
+          <button class="delete-btn" onclick="deleteAlarm(${index})">🗑️</button>
+        `;
+        alarmListEl.appendChild(item);
+      });
+    }
+
+    addAlarmBtn.addEventListener('click', () => {
+      const time = alarmTimeInput.value;
+      if (!time) return alert('Выберите время!');
+
+      alarms.push({
+        time: time,
+        sound: alarmSoundSelect.value,
+        text: alarmTextInput.value.trim(),
+        task: taskTypeSelect.value,
+        triggered: false
+      });
+
+      alarmTimeInput.value = '';
+      alarmTextInput.value = '';
+      saveAlarms();
+    });
+
+    window.deleteAlarm = function(index) {
+      alarms.splice(index, 1);
+      saveAlarms();
+    };
+
+    renderAlarms();
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playSoundTone(type, isPreview = false) {
+      const ctx = getAudioContext();
+      const now = ctx.currentTime;
+
+      if (type === 'classic') {
+        for (let i = 0; i < (isPreview ? 2 : 4); i++) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(1050 + (i % 2 === 0 ? 200 : 0), now + i * 0.12);
+          gain.gain.setValueAtTime(0.4, now + i * 0.12);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.09);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.12);
+          osc.stop(now + i * 0.12 + 0.09);
+        }
+      } else if (type === 'digital') {
+        for (let i = 0; i < (isPreview ? 2 : 3); i++) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(2000, now + i * 0.1);
+          gain.gain.setValueAtTime(0.3, now + i * 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.06);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.1);
+          osc.stop(now + i * 0.1 + 0.06);
+        }
+      } else if (type === 'siren') {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.linearRampToValueAtTime(1200, now + (isPreview ? 0.5 : 0.8));
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + (isPreview ? 0.5 : 0.8));
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + (isPreview ? 0.5 : 0.8));
+      }
+    }
+
+    previewSoundBtn.addEventListener('click', () => {
+      playSoundTone(alarmSoundSelect.value, true);
+    });
+
+    function startAlarmSound(soundType) {
+      isAlarmRinging = true;
+
+      if ('vibrate' in navigator) {
+        navigator.vibrate([1000, 500, 1000, 500]);
+      }
+
+      function loop() {
+        if (!isAlarmRinging) return;
+        playSoundTone(soundType);
+        soundTimer = setTimeout(loop, soundType === 'siren' ? 900 : 1000);
+      }
+
+      loop();
+    }
+
+    function startSpeechLoop(text) {
+      if (!('speechSynthesis' in window) || !text) return;
+
+      function speak() {
+        if (!isAlarmRinging) return;
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ru-RU';
+        utterance.rate = 1.0;
+        utterance.volume = 1.0;
+        
+        utterance.onend = () => {
+          if (isAlarmRinging) {
+            speechInterval = setTimeout(speak, 1000);
+          }
+        };
+
+        window.speechSynthesis.speak(utterance);
+      }
+
+      speak();
+    }
+
+    function stopAlarmSound() {
+      isAlarmRinging = false;
+      if (soundTimer) clearTimeout(soundTimer);
+      if (speechInterval) clearTimeout(speechInterval);
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+      if ('vibrate' in navigator) navigator.vibrate(0);
+
+      if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+        videoStream = null;
+      }
+    }
+
+    function checkAlarms(now) {
+      if (isAlarmRinging) return;
+
+      const timeString = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      alarms.forEach((alarm) => {
+        if (alarm.time === timeString && !alarm.triggered && now.getSeconds() === 0) {
+          triggerAlarm(alarm);
+        }
+      });
+    }
+
+    function triggerAlarm(alarm) {
+      alarm.triggered = true;
+      activeAlarm = alarm;
+      
+      startAlarmSound(alarm.sound || 'classic');
+
+      if (alarm.text) {
+        startSpeechLoop(alarm.text);
+      }
+
+      setupTask(alarm.task);
+      alarmModal.classList.remove('hidden');
+    }
+
+    async function setupTask(taskType) {
+      taskContainer.innerHTML = '';
+      errorMsg.style.display = 'none';
+      submitTaskBtn.style.display = 'block';
+
+      if (taskType === 'algebra') {
+        const a1 = Math.floor(Math.random() * 4) + 2;
+        const a2 = a1 + Math.floor(Math.random() * 3) + 1;
+        const x = Math.floor(Math.random() * 9) + 1;
+        
+        const b1 = Math.floor(Math.random() * 10) + 10;
+        const b2 = b1 - (a2 - a1) * x;
+
+        currentTaskData.answer = x;
+        currentTaskData.type = 'math';
+
+        modalDesc.textContent = `Найдите значение X в уравнении:`;
+
+        taskContainer.innerHTML = `
+          <div style="font-size: 1.6rem; font-weight: bold; margin-bottom: 15px; color: var(--accent-color);">
+            ${a1}x + ${b1} = ${a2}x + ${b2}
+          </div>
+          <input type="number" id="taskInput" class="task-input" placeholder="x = ?" autofocus>
+        `;
+        submitTaskBtn.textContent = 'Проверить X';
+
+      } else if (taskType === 'math') {
+        const num1 = Math.floor(Math.random() * 50) + 10;
+        const num2 = Math.floor(Math.random() * 50) + 10;
+        currentTaskData.answer = num1 + num2;
+        currentTaskData.type = 'math';
+
+        modalDesc.textContent = `Сколько будет ${num1} + ${num2}?`;
+
+        taskContainer.innerHTML = `
+          <input type="number" id="taskInput" class="task-input" placeholder="Ответ" autofocus>
+        `;
+        submitTaskBtn.textContent = 'Проверить';
+
+      } else if (['sink', 'toothbrush', 'cup'].includes(taskType)) {
+        const targetNames = {
+          sink: 'Раковину',
+          toothbrush: 'Зубную пасту / Щетку',
+          cup: 'Кружку / Чашку'
+        };
+
+        modalDesc.textContent = `Наведите камеру на ${targetNames[taskType]}`;
+
+        taskContainer.innerHTML = `
+          <div class="camera-container">
+            <video id="webcam" autoplay playsinline></video>
+          </div>
+        `;
+
+        try {
+          videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+          document.getElementById('webcam').srcObject = videoStream;
+        } catch (err) {
+          errorMsg.textContent = 'Ошибка доступа к камере!';
+          errorMsg.style.display = 'block';
+        }
+
+        submitTaskBtn.textContent = 'Сканировать предмет';
+        currentTaskData.type = 'camera';
+
+      } else if (taskType === 'clicker') {
+        currentTaskData.clicksLeft = 15;
+        currentTaskData.type = 'clicker';
+
+        modalDesc.textContent = 'Нажмите на кнопку 15 раз!';
+
+        taskContainer.innerHTML = `
+          <button id="clickerBtn" class="btn" style="padding: 20px; font-size: 1.3rem;">Осталось нажатий: 15</button>
+        `;
+        submitTaskBtn.style.display = 'none';
+
+        const btn = document.getElementById('clickerBtn');
+        btn.addEventListener('click', () => {
+          currentTaskData.clicksLeft--;
+          btn.textContent = `Осталось нажатий: ${currentTaskData.clicksLeft}`;
+          if (currentTaskData.clicksLeft <= 0) {
+            completeAlarm();
+          }
+        });
+      }
+    }
+
+    submitTaskBtn.addEventListener('click', () => {
+      if (currentTaskData.type === 'camera') {
+        submitTaskBtn.textContent = 'Сканирование...';
+        setTimeout(() => {
+          completeAlarm();
+        }, 1200);
+
+      } else if (currentTaskData.type === 'math') {
+        const input = document.getElementById('taskInput');
+        if (input && parseInt(input.value.trim()) === currentTaskData.answer) {
+          completeAlarm();
+        } else {
+          errorMsg.textContent = 'Неверно! Попробуйте еще раз.';
+          errorMsg.style.display = 'block';
+        }
+      }
+    });
+
+    function completeAlarm() {
+      stopAlarmSound();
+      alarmModal.classList.add('hidden');
+      alert('Отлично! Задание выполнено, будильник отключен.');
+      
+      if (activeAlarm) {
+        activeAlarm.triggered = false;
+        saveAlarms();
+      }
+    }
+  </script>
+</body>
+</html>
